@@ -5,21 +5,118 @@
  */
 package jpicasst;
 
+import jpicasst.renderables.DrawBuffer;
+import java.awt.Color;
+import java.awt.Cursor;
+import java.awt.Point;
+import java.awt.event.KeyEvent;
+import java.util.ArrayList;
+import java.util.List;
+import javax.swing.JButton;
+import javax.swing.JPanel;
+import javax.swing.UIManager;
+import jpicasst.renderables.LineBuffer;
+import jpicasst.renderables.PathBuffer;
+import jpicasst.renderables.Renderable;
+
 /**
  *
  * @author Naitsirc98
  */
 public class JPicasst extends javax.swing.JFrame {
 
-    /**
-     * Creates new form JPicasst
-     */
+    private static final int TOOL_SELECT = 0;
+    private static final int TOOL_DRAW = 1;
+    private static final int TOOL_LINE = 2;
+    private static final int TOOL_SHAPE = 3;
+    private static final int TOOL_ERASE = 4;
+
+    private static final Color BUTTON_SELECTED_COLOR = new Color(0.95f, 0.95f, 0.95f);
+
+    private final Tool[] tools;
+
+    private Tool activeTool;
+
     public JPicasst() {
         initComponents();
-        
-        
-        
-        
+
+        drawingOptionsPanel.setVisible(false);
+        lineOptionsPanel.setVisible(false);
+        shapeOptionsPanel.setVisible(false);
+
+        tools = new Tool[]{
+            new Tool(selectButton, null, null),
+            new Tool(drawButton, drawingOptionsPanel, new PathBuffer()),
+            new Tool(lineButton, lineOptionsPanel, new LineBuffer()),
+            new Tool(shapeButton, shapeOptionsPanel, null),
+            new Tool(eraseButton, new EraseOptionsPanel(), null)
+        };
+
+        setUIColors();
+
+        setActiveTool(TOOL_DRAW);
+    }
+
+    private void addToolOptionsPanels() {
+        for (Tool tool : tools) {
+            if (tool.getPanel() != null) {
+                tool.getPanel().setVisible(false);
+                toolOptionsPanel.add(tool.getPanel());
+            }
+        }
+    }
+
+    private void setUIColors() {
+        getContentPane().setBackground(topPanel.getBackground());
+        toolOptionsPanel.setBackground(topPanel.getBackground());
+        canvas.setBackground(Color.WHITE);
+
+        Utils.setButtonsOpaque(undoButton, redoButton, selectButton,
+                drawButton, lineButton, shapeButton, eraseButton);
+
+    }
+
+    private void resetTool(Tool tool) {
+        tool.getButton().setBackground(toolsPanel.getBackground());
+        if (tool.getPanel() != null) {
+            tool.getPanel().setVisible(false);
+        }
+    }
+
+    private void setActiveTool(int toolIndex) {
+        if (activeTool != null) {
+            resetTool(activeTool);
+        }
+        activeTool = tools[toolIndex];
+        activeTool.getButton().setBackground(BUTTON_SELECTED_COLOR);
+
+        if (activeTool.getPanel() != null) {
+            activeTool.getPanel().setVisible(true);
+            toolOptionsPanel.repaint();
+            canvas.setCursor(activeTool.getPanel().getCanvasCursor());
+        } else {
+            canvas.setCursor(Cursor.getDefaultCursor());
+        }
+        toolsPanel.setVisible(false);
+        toolsPanel.setVisible(true);
+    }
+
+    private void eraseOnHit(int x, int y) {
+
+        List<Renderable> objects = canvas.getRenderQueue();
+
+        for (int i = objects.size() - 1; i >= 0; i--) {
+
+            Renderable obj = objects.get(i);
+
+            if (obj.getBoundingBox().contains(x, y)) {
+                objects.remove(obj);
+                canvas.repaint();
+                break;
+            }
+
+        }
+
     }
 
     /**
@@ -31,48 +128,324 @@ public class JPicasst extends javax.swing.JFrame {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        toolsPanel = new javax.swing.JPanel();
+        selectButton = new javax.swing.JButton();
+        drawButton = new javax.swing.JButton();
+        eraseButton = new javax.swing.JButton();
+        lineButton = new javax.swing.JButton();
+        shapeButton = new javax.swing.JButton();
+        topPanel = new javax.swing.JPanel();
+        logoIcon = new javax.swing.JLabel();
+        toolOptionsPanel = new javax.swing.JPanel();
+        drawingOptionsPanel = new jpicasst.DrawingOptionsPanel();
+        lineOptionsPanel = new jpicasst.DrawingOptionsPanel();
+        shapeOptionsPanel = new jpicasst.ShapeOptionsPanel();
+        undoButton = new javax.swing.JButton();
+        redoButton = new javax.swing.JButton();
+        canvas = new jpicasst.Canvas();
+
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setBackground(new java.awt.Color(255, 255, 255));
+        setMaximumSize(new java.awt.Dimension(1280, 720));
+        setMinimumSize(new java.awt.Dimension(1280, 720));
+        setPreferredSize(new java.awt.Dimension(1280, 720));
+        setResizable(false);
+
+        toolsPanel.setBackground(new java.awt.Color(0, 0, 0));
+
+        selectButton.setBackground(new java.awt.Color(0, 0, 0));
+        selectButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/jpicasst/cursor.png"))); // NOI18N
+        selectButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                selectButtonActionPerformed(evt);
+            }
+        });
+
+        drawButton.setBackground(new java.awt.Color(0, 0, 0));
+        drawButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/jpicasst/pencil.png"))); // NOI18N
+        drawButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                drawButtonActionPerformed(evt);
+            }
+        });
+
+        eraseButton.setBackground(new java.awt.Color(0, 0, 0));
+        eraseButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/jpicasst/eraser.png"))); // NOI18N
+        eraseButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                eraseButtonActionPerformed(evt);
+            }
+        });
+
+        lineButton.setBackground(new java.awt.Color(0, 0, 0));
+        lineButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/jpicasst/line.png"))); // NOI18N
+        lineButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                lineButtonActionPerformed(evt);
+            }
+        });
+
+        shapeButton.setBackground(new java.awt.Color(0, 0, 0));
+        shapeButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/jpicasst/shape.png"))); // NOI18N
+        shapeButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                shapeButtonActionPerformed(evt);
+            }
+        });
+
+        javax.swing.GroupLayout toolsPanelLayout = new javax.swing.GroupLayout(toolsPanel);
+        toolsPanel.setLayout(toolsPanelLayout);
+        toolsPanelLayout.setHorizontalGroup(
+            toolsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(toolsPanelLayout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(toolsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(drawButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(eraseButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addGroup(toolsPanelLayout.createSequentialGroup()
+                        .addComponent(selectButton)
+                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addComponent(lineButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(shapeButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap())
+        );
+        toolsPanelLayout.setVerticalGroup(
+            toolsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(toolsPanelLayout.createSequentialGroup()
+                .addGap(83, 83, 83)
+                .addComponent(selectButton)
+                .addGap(32, 32, 32)
+                .addComponent(drawButton)
+                .addGap(32, 32, 32)
+                .addComponent(lineButton)
+                .addGap(32, 32, 32)
+                .addComponent(shapeButton)
+                .addGap(32, 32, 32)
+                .addComponent(eraseButton)
+                .addGap(155, 155, 155))
+        );
+
+        topPanel.setBackground(new java.awt.Color(0, 0, 0));
+
+        logoIcon.setIcon(new javax.swing.ImageIcon(getClass().getResource("/jpicasst/jpicasst.png"))); // NOI18N
+
+        toolOptionsPanel.setBackground(new java.awt.Color(0, 0, 0));
+        toolOptionsPanel.setMaximumSize(new java.awt.Dimension(751, 70));
+        toolOptionsPanel.setMinimumSize(new java.awt.Dimension(751, 70));
+
+        javax.swing.GroupLayout toolOptionsPanelLayout = new javax.swing.GroupLayout(toolOptionsPanel);
+        toolOptionsPanel.setLayout(toolOptionsPanelLayout);
+        toolOptionsPanelLayout.setHorizontalGroup(
+            toolOptionsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(toolOptionsPanelLayout.createSequentialGroup()
+                .addGap(5, 5, 5)
+                .addComponent(drawingOptionsPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(5, 5, 5)
+                .addComponent(lineOptionsPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(5, 5, 5)
+                .addComponent(shapeOptionsPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+        );
+        toolOptionsPanelLayout.setVerticalGroup(
+            toolOptionsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(toolOptionsPanelLayout.createSequentialGroup()
+                .addGap(5, 5, 5)
+                .addGroup(toolOptionsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(drawingOptionsPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(lineOptionsPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(shapeOptionsPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+        );
+
+        undoButton.setBackground(new java.awt.Color(0, 0, 0));
+        undoButton.setForeground(new java.awt.Color(0, 0, 0));
+        undoButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/jpicasst/undo.png"))); // NOI18N
+        undoButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                undoButtonActionPerformed(evt);
+            }
+        });
+
+        redoButton.setBackground(new java.awt.Color(0, 0, 0));
+        redoButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/jpicasst/redo.png"))); // NOI18N
+        redoButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                redoButtonActionPerformed(evt);
+            }
+        });
+
+        javax.swing.GroupLayout topPanelLayout = new javax.swing.GroupLayout(topPanel);
+        topPanel.setLayout(topPanelLayout);
+        topPanelLayout.setHorizontalGroup(
+            topPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(topPanelLayout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(logoIcon)
+                .addGap(74, 74, 74)
+                .addComponent(undoButton, javax.swing.GroupLayout.PREFERRED_SIZE, 66, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(18, 18, 18)
+                .addComponent(redoButton)
+                .addGap(108, 108, 108)
+                .addComponent(toolOptionsPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+        );
+        topPanelLayout.setVerticalGroup(
+            topPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(toolOptionsPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, topPanelLayout.createSequentialGroup()
+                .addGroup(topPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(redoButton)
+                    .addComponent(undoButton)
+                    .addComponent(logoIcon, javax.swing.GroupLayout.PREFERRED_SIZE, 38, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap())
+        );
+
+        canvas.setBackground(new java.awt.Color(255, 255, 255));
+        canvas.addMouseMotionListener(new java.awt.event.MouseMotionAdapter() {
+            public void mouseDragged(java.awt.event.MouseEvent evt) {
+                canvasMouseDragged(evt);
+            }
+        });
+        canvas.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                canvasMouseClicked(evt);
+            }
+            public void mousePressed(java.awt.event.MouseEvent evt) {
+                canvasMousePressed(evt);
+            }
+            public void mouseReleased(java.awt.event.MouseEvent evt) {
+                canvasMouseReleased(evt);
+            }
+        });
+        canvas.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyPressed(java.awt.event.KeyEvent evt) {
+                canvasKeyPressed(evt);
+            }
+        });
+
+        javax.swing.GroupLayout canvasLayout = new javax.swing.GroupLayout(canvas);
+        canvas.setLayout(canvasLayout);
+        canvasLayout.setHorizontalGroup(
+            canvasLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 0, Short.MAX_VALUE)
+        );
+        canvasLayout.setVerticalGroup(
+            canvasLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 0, Short.MAX_VALUE)
+        );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 713, Short.MAX_VALUE)
+            .addGroup(layout.createSequentialGroup()
+                .addComponent(toolsPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 84, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(canvas, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+            .addComponent(topPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 523, Short.MAX_VALUE)
+            .addGroup(layout.createSequentialGroup()
+                .addComponent(topPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(0, 0, 0)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(toolsPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(canvas, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
         );
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
+    private void undoButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_undoButtonActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_undoButtonActionPerformed
+
+    private void redoButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_redoButtonActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_redoButtonActionPerformed
+
+    private void selectButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_selectButtonActionPerformed
+        setActiveTool(TOOL_SELECT);
+    }//GEN-LAST:event_selectButtonActionPerformed
+
+    private void drawButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_drawButtonActionPerformed
+        setActiveTool(TOOL_DRAW);
+    }//GEN-LAST:event_drawButtonActionPerformed
+
+    private void lineButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_lineButtonActionPerformed
+        setActiveTool(TOOL_LINE);
+    }//GEN-LAST:event_lineButtonActionPerformed
+
+    private void shapeButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_shapeButtonActionPerformed
+        setActiveTool(TOOL_SHAPE);
+    }//GEN-LAST:event_shapeButtonActionPerformed
+
+    private void eraseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_eraseButtonActionPerformed
+        setActiveTool(TOOL_ERASE);
+    }//GEN-LAST:event_eraseButtonActionPerformed
+
+    private void canvasMouseDragged(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_canvasMouseDragged
+
+        if (activeTool == tools[TOOL_ERASE]) {
+            eraseOnHit(evt.getX(), evt.getY());
+        }
+
+        DrawBuffer buffer = activeTool.getDrawBuffer();
+
+        if (buffer == null) {
+            return;
+        }
+
+        if (buffer.isActive()) {
+            buffer.update(evt.getX(), evt.getY());
+        } else {
+            DrawingOptionsPanel panel = (DrawingOptionsPanel) activeTool.getPanel();
+            buffer.begin(evt.getX(), evt.getY(), panel.getColor(), panel.getStrokeSlider().getValue());
+            canvas.setDrawBuffer(buffer);
+        }
+
+        canvas.repaint();
+
+    }//GEN-LAST:event_canvasMouseDragged
+
+    private void canvasMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_canvasMouseReleased
+
+        DrawBuffer buffer = activeTool.getDrawBuffer();
+
+        if (buffer == null) {
+            return;
+        }
+
+        if (!buffer.isActive()) {
+            return;
+        }
+
+        canvas.setDrawBuffer(null);
+
+        canvas.getRenderQueue().add(buffer.end());
+
+        canvas.repaint();
+    }//GEN-LAST:event_canvasMouseReleased
+
+    private void canvasKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_canvasKeyPressed
+
+
+    }//GEN-LAST:event_canvasKeyPressed
+
+    private void canvasMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_canvasMouseClicked
+
+    }//GEN-LAST:event_canvasMouseClicked
+
+    private void canvasMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_canvasMousePressed
+        if (activeTool == tools[TOOL_ERASE]) {
+            eraseOnHit(evt.getX(), evt.getY());
+        }
+    }//GEN-LAST:event_canvasMousePressed
+
     /**
      * @param args the command line arguments
      */
-    public static void main(String args[]) {
-        /* Set the Nimbus look and feel */
-        //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
-        /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
-         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
-         */
-        try {
-            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
-                if ("Nimbus".equals(info.getName())) {
-                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
-                    break;
-                }
-            }
-        } catch (ClassNotFoundException ex) {
-            java.util.logging.Logger.getLogger(JPicasst.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (InstantiationException ex) {
-            java.util.logging.Logger.getLogger(JPicasst.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (IllegalAccessException ex) {
-            java.util.logging.Logger.getLogger(JPicasst.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (javax.swing.UnsupportedLookAndFeelException ex) {
-            java.util.logging.Logger.getLogger(JPicasst.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        }
-        //</editor-fold>
+    public static void main(String args[]) throws Exception {
+
+        UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
 
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(new Runnable() {
@@ -83,5 +456,21 @@ public class JPicasst extends javax.swing.JFrame {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private jpicasst.Canvas canvas;
+    private javax.swing.JButton drawButton;
+    private jpicasst.DrawingOptionsPanel drawingOptionsPanel;
+    private javax.swing.JButton eraseButton;
+    private javax.swing.JButton lineButton;
+    private jpicasst.DrawingOptionsPanel lineOptionsPanel;
+    private javax.swing.JLabel logoIcon;
+    private javax.swing.JButton redoButton;
+    private javax.swing.JButton selectButton;
+    private javax.swing.JButton shapeButton;
+    private jpicasst.ShapeOptionsPanel shapeOptionsPanel;
+    private javax.swing.JPanel toolOptionsPanel;
+    private javax.swing.JPanel toolsPanel;
+    private javax.swing.JPanel topPanel;
+    private javax.swing.JButton undoButton;
     // End of variables declaration//GEN-END:variables
+
 }
