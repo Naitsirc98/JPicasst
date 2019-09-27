@@ -115,10 +115,10 @@ public class PathBuffer implements DrawBuffer {
 
         active = false;
 
-        final int width = Integer.max(Math.abs(x1 - x0), 1) + strokeThickness * 2;
-        final int height = Integer.max(Math.abs(y1 - y0), 1) + strokeThickness * 2;
+        final int width = Integer.max(Math.abs(x1 - x0), 1);
+        final int height = Integer.max(Math.abs(y1 - y0), 1);
 
-        BufferedImage texture = DrawBuffer.createTexture2D(width, height);
+        BufferedImage texture = DrawBuffer.createTexture2D(width+ strokeThickness * 2, height+ strokeThickness * 2);
         
         Graphics2D g = texture.createGraphics();
 

@@ -72,13 +72,13 @@ public class LineBuffer implements DrawBuffer {
         final int x1 = Integer.max(origin.x, target.x);
         final int y1 = Integer.max(origin.y, target.y);
         
-        final int width = Integer.max(Math.abs(x1 - x0), 1) + strokeThickness * 2;
-        final int height = Integer.max(Math.abs(y1 - y0), 1) + strokeThickness * 2;
+        final int width = Integer.max(Math.abs(x1 - x0), 1);
+        final int height = Integer.max(Math.abs(y1 - y0), 1) ;
         
         origin.translate(-x0, -y0);
         target.translate(-x0, -y0);
 
-        BufferedImage texture = DrawBuffer.createTexture2D(width, height);
+        BufferedImage texture = DrawBuffer.createTexture2D(width + strokeThickness * 2, height + strokeThickness * 2);
 
         Graphics2D g = texture.createGraphics();
         Canvas.getInstance().setGraphicsConfig(g);
