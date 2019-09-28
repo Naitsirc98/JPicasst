@@ -10,8 +10,11 @@ import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.Point;
 import java.awt.event.KeyEvent;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Deque;
 import java.util.List;
+import java.util.Queue;
 import javax.swing.JButton;
 import javax.swing.JPanel;
 import javax.swing.UIManager;
@@ -26,17 +29,42 @@ import jpicasst.renderables.ShapeBuffer;
  */
 public class JPicasst extends javax.swing.JFrame {
 
-    private static final int TOOL_SELECT = 0;
-    private static final int TOOL_DRAW = 1;
-    private static final int TOOL_LINE = 2;
-    private static final int TOOL_SHAPE = 3;
-    private static final int TOOL_ERASE = 4;
+    enum ActionType {
+        DRAW, ERASE
+    }
+
+    private class CanvasAction {
+
+        ActionType type;
+        Renderable obj;
+
+        public CanvasAction(ActionType type, Renderable obj) {
+            this.type = type;
+            this.obj = obj;
+        }
+        
+        public CanvasAction negate() {
+            type = type == ActionType.DRAW ? ActionType.ERASE : ActionType.DRAW;
+            return this;
+        }
+
+    }
+
+    private static final int TOOL_DRAW = 0;
+    private static final int TOOL_LINE = 1;
+    private static final int TOOL_SHAPE = 2;
+    private static final int TOOL_ERASE = 3;
+
+    private static final int MAX_UNDO_REDO_BUFFER_SIZE = 32;
 
     private static final Color BUTTON_SELECTED_COLOR = new Color(0.95f, 0.95f, 0.95f);
 
     private final Tool[] tools;
 
     private Tool activeTool;
+
+    private Deque<CanvasAction> undoBuffer;
+    private Deque<CanvasAction> redoBuffer;
 
     public JPicasst() {
         initComponents();
@@ -46,7 +74,6 @@ public class JPicasst extends javax.swing.JFrame {
         shapeOptionsPanel.setVisible(false);
 
         tools = new Tool[]{
-            new Tool(selectButton, null, null),
             new Tool(drawButton, drawingOptionsPanel, new PathBuffer()),
             new Tool(lineButton, lineOptionsPanel, new LineBuffer()),
             new Tool(shapeButton, shapeOptionsPanel, new ShapeBuffer()),
@@ -56,6 +83,10 @@ public class JPicasst extends javax.swing.JFrame {
         setUIColors();
 
         setActiveTool(TOOL_DRAW);
+
+        undoBuffer = new ArrayDeque<>(MAX_UNDO_REDO_BUFFER_SIZE);
+        redoBuffer = new ArrayDeque<>(MAX_UNDO_REDO_BUFFER_SIZE);
+
     }
 
     private void addToolOptionsPanels() {
@@ -72,7 +103,7 @@ public class JPicasst extends javax.swing.JFrame {
         toolOptionsPanel.setBackground(topPanel.getBackground());
         canvas.setBackground(Color.WHITE);
 
-        Utils.setButtonsOpaque(undoButton, redoButton, selectButton,
+        Utils.setButtonsOpaque(undoButton, redoButton,
                 drawButton, lineButton, shapeButton, eraseButton);
 
     }
@@ -111,6 +142,9 @@ public class JPicasst extends javax.swing.JFrame {
             Renderable obj = objects.get(i);
 
             if (obj.getBoundingBox().contains(x, y)) {
+                
+                registerCanvasAction(undoBuffer, new CanvasAction(ActionType.ERASE, obj));
+                
                 objects.remove(obj);
                 canvas.repaint();
                 break;
@@ -118,6 +152,14 @@ public class JPicasst extends javax.swing.JFrame {
 
         }
 
+    }
+
+    private void registerCanvasAction(Deque<CanvasAction> buffer, CanvasAction canvasAction) {
+        // Discard oldest action if the buffer is full
+        if (buffer.size() == MAX_UNDO_REDO_BUFFER_SIZE) {
+            buffer.remove();
+        }
+        buffer.push(canvasAction);
     }
 
     /**
@@ -130,7 +172,6 @@ public class JPicasst extends javax.swing.JFrame {
     private void initComponents() {
 
         toolsPanel = new javax.swing.JPanel();
-        selectButton = new javax.swing.JButton();
         drawButton = new javax.swing.JButton();
         eraseButton = new javax.swing.JButton();
         lineButton = new javax.swing.JButton();
@@ -153,14 +194,6 @@ public class JPicasst extends javax.swing.JFrame {
         setResizable(false);
 
         toolsPanel.setBackground(new java.awt.Color(0, 0, 0));
-
-        selectButton.setBackground(new java.awt.Color(0, 0, 0));
-        selectButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/jpicasst/cursor.png"))); // NOI18N
-        selectButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                selectButtonActionPerformed(evt);
-            }
-        });
 
         drawButton.setBackground(new java.awt.Color(0, 0, 0));
         drawButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/jpicasst/pencil.png"))); // NOI18N
@@ -203,9 +236,6 @@ public class JPicasst extends javax.swing.JFrame {
                 .addGroup(toolsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(drawButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(eraseButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addGroup(toolsPanelLayout.createSequentialGroup()
-                        .addComponent(selectButton)
-                        .addGap(0, 0, Short.MAX_VALUE))
                     .addComponent(lineButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(shapeButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
@@ -213,9 +243,7 @@ public class JPicasst extends javax.swing.JFrame {
         toolsPanelLayout.setVerticalGroup(
             toolsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(toolsPanelLayout.createSequentialGroup()
-                .addGap(83, 83, 83)
-                .addComponent(selectButton)
-                .addGap(32, 32, 32)
+                .addGap(157, 157, 157)
                 .addComponent(drawButton)
                 .addGap(32, 32, 32)
                 .addComponent(lineButton)
@@ -356,16 +384,44 @@ public class JPicasst extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void undoButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_undoButtonActionPerformed
-        // TODO add your handling code here:
+        if (undoBuffer.isEmpty()) {
+            return;
+        }
+
+        CanvasAction action = undoBuffer.pop();
+        
+        if(action.type == ActionType.DRAW) {
+            // Erase from the canvas
+            canvas.getRenderQueue().remove(action.obj);
+        } else {
+            // Draw onto the canvas
+            canvas.getRenderQueue().add(action.obj);
+        }
+        
+        registerCanvasAction(redoBuffer, action.negate());
+
+        canvas.repaint();
     }//GEN-LAST:event_undoButtonActionPerformed
 
     private void redoButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_redoButtonActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_redoButtonActionPerformed
+        if (redoBuffer.isEmpty()) {
+            return;
+        }
 
-    private void selectButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_selectButtonActionPerformed
-        setActiveTool(TOOL_SELECT);
-    }//GEN-LAST:event_selectButtonActionPerformed
+        CanvasAction action = redoBuffer.pop();
+        
+        if(action.type == ActionType.DRAW) {
+            // Erase from the canvas
+            canvas.getRenderQueue().remove(action.obj);
+        } else {
+            // Draw onto the canvas
+            canvas.getRenderQueue().add(action.obj);
+        }
+        
+        registerCanvasAction(undoBuffer, action.negate());
+
+        canvas.repaint();
+    }//GEN-LAST:event_redoButtonActionPerformed
 
     private void drawButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_drawButtonActionPerformed
         setActiveTool(TOOL_DRAW);
@@ -403,13 +459,13 @@ public class JPicasst extends javax.swing.JFrame {
             int stroke = panel.getStrokeSlider().getValue();
             String shape = null;
             String drawMode = null;
-            
-            if(buffer instanceof ShapeBuffer) {
-               ShapeOptionsPanel p = (ShapeOptionsPanel) panel;
-               shape = p.getShapeName();
-               drawMode = p.getDrawMode();
+
+            if (buffer instanceof ShapeBuffer) {
+                ShapeOptionsPanel p = (ShapeOptionsPanel) panel;
+                shape = p.getShapeName();
+                drawMode = p.getDrawMode();
             }
-            
+
             buffer.begin(evt.getX(), evt.getY(), panel.getColor(), panel.getStrokeSlider().getValue(), shape, drawMode);
             canvas.setDrawBuffer(buffer);
         }
@@ -431,8 +487,13 @@ public class JPicasst extends javax.swing.JFrame {
         }
 
         canvas.setDrawBuffer(null);
+        
+        Renderable obj = buffer.end();
 
-        canvas.getRenderQueue().add(buffer.end());
+        // Save the current state of the render queue to the undo buffer
+        registerCanvasAction(undoBuffer, new CanvasAction(ActionType.DRAW, obj));
+
+        canvas.getRenderQueue().add(obj);
 
         canvas.repaint();
     }//GEN-LAST:event_canvasMouseReleased
@@ -476,7 +537,6 @@ public class JPicasst extends javax.swing.JFrame {
     private jpicasst.DrawingOptionsPanel lineOptionsPanel;
     private javax.swing.JLabel logoIcon;
     private javax.swing.JButton redoButton;
-    private javax.swing.JButton selectButton;
     private javax.swing.JButton shapeButton;
     private jpicasst.ShapeOptionsPanel shapeOptionsPanel;
     private javax.swing.JPanel toolOptionsPanel;

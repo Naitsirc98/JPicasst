@@ -63,6 +63,10 @@ public class Canvas extends JPanel {
         return renderQueue;
     }
     
+    public void setRenderQueue(List<Renderable> renderQueue) {
+        this.renderQueue = renderQueue;
+    }
+    
     public void setDrawBuffer(DrawBuffer buffer) {
         this.buffer = buffer;
     }
