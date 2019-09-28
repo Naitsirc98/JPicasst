@@ -8,14 +8,15 @@ package jpicasst.renderables;
 import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.Rectangle;
+import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 
 public class Renderable {
     
     private final BufferedImage texture;
-    private final Rectangle boundingBox;
+    private final Rectangle2D boundingBox;
     
-    public Renderable(BufferedImage texture, Rectangle bb) {
+    public Renderable(BufferedImage texture, Rectangle2D bb) {
         this.texture = texture;
         this.boundingBox = bb;
     }
@@ -24,7 +25,7 @@ public class Renderable {
         return texture;
     }
 
-    public Rectangle getBoundingBox() {
+    public Rectangle2D getBoundingBox() {
         return boundingBox;
     }
     

@@ -18,6 +18,7 @@ import javax.swing.UIManager;
 import jpicasst.renderables.LineBuffer;
 import jpicasst.renderables.PathBuffer;
 import jpicasst.renderables.Renderable;
+import jpicasst.renderables.ShapeBuffer;
 
 /**
  *
@@ -48,7 +49,7 @@ public class JPicasst extends javax.swing.JFrame {
             new Tool(selectButton, null, null),
             new Tool(drawButton, drawingOptionsPanel, new PathBuffer()),
             new Tool(lineButton, lineOptionsPanel, new LineBuffer()),
-            new Tool(shapeButton, shapeOptionsPanel, null),
+            new Tool(shapeButton, shapeOptionsPanel, new ShapeBuffer()),
             new Tool(eraseButton, new EraseOptionsPanel(), null)
         };
 
@@ -238,21 +239,21 @@ public class JPicasst extends javax.swing.JFrame {
         toolOptionsPanelLayout.setHorizontalGroup(
             toolOptionsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(toolOptionsPanelLayout.createSequentialGroup()
-                .addGap(5, 5, 5)
-                .addComponent(drawingOptionsPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(5, 5, 5)
                 .addComponent(lineOptionsPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(5, 5, 5)
-                .addComponent(shapeOptionsPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(drawingOptionsPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(shapeOptionsPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap())
         );
         toolOptionsPanelLayout.setVerticalGroup(
             toolOptionsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(toolOptionsPanelLayout.createSequentialGroup()
-                .addGap(5, 5, 5)
                 .addGroup(toolOptionsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(drawingOptionsPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(lineOptionsPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(shapeOptionsPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                    .addComponent(drawingOptionsPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(shapeOptionsPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(5, 5, 5))
         );
 
         undoButton.setBackground(new java.awt.Color(0, 0, 0));
@@ -398,7 +399,18 @@ public class JPicasst extends javax.swing.JFrame {
             buffer.update(evt.getX(), evt.getY());
         } else {
             DrawingOptionsPanel panel = (DrawingOptionsPanel) activeTool.getPanel();
-            buffer.begin(evt.getX(), evt.getY(), panel.getColor(), panel.getStrokeSlider().getValue());
+            Color color = panel.getColor();
+            int stroke = panel.getStrokeSlider().getValue();
+            String shape = null;
+            String drawMode = null;
+            
+            if(buffer instanceof ShapeBuffer) {
+               ShapeOptionsPanel p = (ShapeOptionsPanel) panel;
+               shape = p.getShapeName();
+               drawMode = p.getDrawMode();
+            }
+            
+            buffer.begin(evt.getX(), evt.getY(), panel.getColor(), panel.getStrokeSlider().getValue(), shape, drawMode);
             canvas.setDrawBuffer(buffer);
         }
 

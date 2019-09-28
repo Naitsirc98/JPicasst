@@ -45,7 +45,7 @@ public class Canvas extends JPanel {
         setGraphicsConfig(g);
 
         for(Renderable r : renderQueue) {
-            graphics.drawImage(r.getTexture(), r.getBoundingBox().x, r.getBoundingBox().y, null);
+            graphics.drawImage(r.getTexture(), (int)r.getBoundingBox().getX(), (int)r.getBoundingBox().getY(), null);
         }
         
         if(buffer != null && buffer.isActive()) {
@@ -73,7 +73,7 @@ public class Canvas extends JPanel {
         graphicsConfig.put(KEY_ANTIALIASING, VALUE_ANTIALIAS_ON);
         graphicsConfig.put(KEY_COLOR_RENDERING, VALUE_COLOR_RENDER_QUALITY);
         graphicsConfig.put(KEY_INTERPOLATION, VALUE_INTERPOLATION_BICUBIC);
-        graphicsConfig.put(KEY_STROKE_CONTROL, VALUE_STROKE_PURE);
+        graphicsConfig.put(KEY_STROKE_CONTROL, VALUE_STROKE_NORMALIZE);
 
     }
 
