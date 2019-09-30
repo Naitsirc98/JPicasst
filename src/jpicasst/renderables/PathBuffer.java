@@ -60,7 +60,6 @@ public class PathBuffer implements DrawBuffer {
         color = (Color) args[2];
         strokeThickness = (Integer)args[3];
         stroke = new BasicStroke(strokeThickness, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND);
-
         active = true;
     }
 

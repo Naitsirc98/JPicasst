@@ -76,7 +76,7 @@ public class Canvas extends JPanel {
         graphicsConfig.put(KEY_RENDERING, VALUE_RENDER_QUALITY);
         graphicsConfig.put(KEY_ANTIALIASING, VALUE_ANTIALIAS_ON);
         graphicsConfig.put(KEY_COLOR_RENDERING, VALUE_COLOR_RENDER_QUALITY);
-        graphicsConfig.put(KEY_INTERPOLATION, VALUE_INTERPOLATION_BICUBIC);
+        graphicsConfig.put(KEY_INTERPOLATION, VALUE_INTERPOLATION_BILINEAR);
         graphicsConfig.put(KEY_STROKE_CONTROL, VALUE_STROKE_NORMALIZE);
 
     }
